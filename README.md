@@ -1,6 +1,6 @@
 # SkyrmionOpticalForce
 该项目记录笔者科研过程中用到的算法函数，包括矢量场表示、瑞利粒子光学力的计算、特殊光束生成等内容
-该项目主要设计到如下几大部分的内容，后续视情况更新：
+该项目主要涉及到如下几大部分的内容，后续视情况更新：
 # Generation of electric-type plasmonic skyrmion
 ## Optical source (circularly polarized vortex beam)
 ## Simulation with Lumerical FDTD
