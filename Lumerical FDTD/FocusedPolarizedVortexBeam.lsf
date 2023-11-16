@@ -1,0 +1,148 @@
+###################################################################################
+#This script generate focused polarized light without Richard-Worf therory.
+# Firstly, the envelope of the Gauss Beam have been generated.
+# Secondly, the the Jones Matrix will be used to realize different
+# polarization states.
+# Then, you can decide if the vortex phase and focused-phase need to be added.
+# Finally, it will be added to the model.
+# 2023 Lusen
+###################################################################################
+clear;
+switchtolayout; 
+
+range = 10e-6;
+resolution = 1001;
+
+x = linspace(-range,range,resolution);
+y = linspace(-range,range,resolution);
+
+z = 1e-9;                             # this is z z-normal source
+X = meshgridx(x,y);
+Y = meshgridy(x,y);
+
+lambda0 = 0.6328e-6;
+f = c/lambda0;
+w = 2*pi*f;
+k = 2*pi/lambda0;
+
+r=sqrt(X^2+Y^2); # cylindrical coordinate
+phi=atan2(X,Y);
+
+###################################################################################
+# Part 1: Project control
+###################################################################################
+# define light parameters
+setpolarizationstates = 3; # 1 2 3 4 represent radical, azimuthal, cicle and linear
+addvortexphase = true;
+addfocusedphase = true;
+
+# set project parametrs
+normalizeintensity = true;
+addtomodel = true;
+visualizefield = false;
+
+# define shape parameters
+fs = 3e-6; # focus length (if addfocusedphase = true)
+l = -1; # orbital angular momentum (if addvortexphase = true)
+s = 1; # 1 or -1 represent lefe-handed or right handed (if circle polarization)
+
+
+###################################################################################
+# Part 2: Gauss Beam 
+###################################################################################
+w0 = 3e-6; 
+z = 10e-9; # the position of the waist of the gauss beam
+zR = pi*w0^2/lambda0; # Rayleigh length
+wz = w0*sqrt(1+(z/zR^2));
+Rz = z*(1+(zR/z)^2); # radius of curvature, it is the function of z
+zetaz = atan(z/zR); # gouy phase
+envelope = w0/wz*exp(-r^2/wz^2)*exp(-1i*k*z-1i*k*r^2/(2*Rz)+1i*zetaz); # envelope(r,z)
+
+
+###################################################################################
+# Part 3: Polarization states
+###################################################################################
+if(setpolarizationstates==1){ # radical
+    px = cos(phi);
+    py = sin(phi);
+    pz = 0;
+}
+else if(setpolarizationstates==2){ #azimuthal
+    px = -sin(phi);
+    py = cos(phi);
+    pz = 0;
+}
+else if(setpolarizationstates==3){ # circle
+    if(s==1){
+        px = 1;
+        py = -1i;
+        pz = 0;
+    }
+    else{
+        px = 1;
+        py = 1i;
+        pz = 0;
+    }
+}
+else if(setpolarizationstates==4){ # linear
+    px = 1;
+    py = 0;
+    pz = 0;
+}
+
+Ex = px*envelope;
+Ey = py*envelope;
+Ez = pz*envelope;
+
+
+###################################################################################
+# Part 4: Vortex-phase
+###################################################################################
+if(addvortexphase){    
+    Ex = Ex*exp(1i*l*phi);
+    Ey = Ey*exp(1i*l*phi);
+    Ez = Ez*exp(1i*l*phi);
+}
+
+
+###################################################################################
+# Part 4: Focused-phase
+###################################################################################
+if(addfocusedphase){
+    phasefocused = k*(fs-sqrt(fs^2+X^2+Y^2)); # spherical lens phase profile
+    
+    Ex = Ex*exp(1i*phasefocused);
+    Ey = Ey*exp(1i*phasefocused);
+    Ez = Ez*exp(1i*phasefocused); # In theory, tightly fousced beam will generate z-components
+}
+
+
+###################################################################################
+# Part 5: Normalize
+###################################################################################
+if(normalizeintensity){
+    E2 = abs(Ex)^2+abs(Ey)^2+abs(Ez)^2;
+    scaleFactor = sqrt(max(E2));
+    Ex = Ex/scaleFactor;
+    Ey = Ey/scaleFactor;
+    Ez = Ez/scaleFactor;
+}
+
+
+###################################################################################
+# Part 6: Add to model and visualized it
+###################################################################################
+EM = rectilineardataset("EM fields",x,y,z);
+EM.addparameter("lambda",c/f,"f",f);
+EM.addattribute("E",Ex,Ey,Ez);
+    
+if(addtomodel){
+    select("import_beam");
+    importdataset(EM);
+    set("center wavelength",lambda0);
+    set("wavelength span",0);
+}
+
+if(visualizefield){
+    visualize(EM);
+}
