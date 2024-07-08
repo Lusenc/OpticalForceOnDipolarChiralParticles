@@ -1,4 +1,4 @@
-# Optical Force On The Dipoalr Chiral Nanoparticles
+# Optical Force On The Dipolar Chiral Nanoparticles
 This project mainly record the matlab functions and lumerical scripts which include the calculation of the optical force, the visualization of vector fields, and the generation of structured light.
 In detail, I collected the electric field components of the SPPs field excited by tightly focused circular polarized vortex beam. The electric field vector show interesting texture like skyrmion.
 
